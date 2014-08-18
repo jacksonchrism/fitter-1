@@ -21,20 +21,24 @@
 //class G4VPhysicalVolume;
 //class G4VSolid;
 
-double fCurrentParam;
+double fCurrentp0;
+double fCurrentp1;
 double fPhotonWavelength;
 
 namespace RAT {
 
-MyMiniSim::MyMiniSim(double photonWavelength, double parameterIterationValue)
+MyMiniSim::MyMiniSim(double photonWavelength, double par0, double par1)
 : MiniSim()
 {
 
 
-  //fix the random number seed
-//  CLHEP::HepRandom::setTheSeed(1234567);
   std::cout << "making the minisim" << std::endl;
-  fCurrentParam = parameterIterationValue;
+  //fix the random number seed
+  CLHEP::HepRandom::setTheSeed(1234567);
+  std::cout << "setting seed (again)" << std::endl;
+//  fCurrentParam = parameterIterationValue;
+  fCurrentp0 = par0;
+  fCurrentp1 = par1;
   fPhotonWavelength = photonWavelength;
   fEventCtr = 0;
   const int nchannels = 90;
@@ -87,13 +91,16 @@ void MyMiniSim::GeneratePrimaries(G4Event* event)
 {
   double dt = 0.0;
 
-  const int fNumPhotons = 1; //number of photons in each event
-  //const int fNumPhotons = 90000; //number of photons in each event
+//  const int fNumPhotons = 1; //number of photons in each event
+//  const int fNumPhotons = 90000; //number of photons in each event
   const double fEnergy = hbarc * twopi / (fPhotonWavelength * nm);
   G4ParticleDefinition* fOpticalPhoton = G4ParticleTable::GetParticleTable()->FindParticle("opticalphoton");
 
-	for(int i=0; i < fNumPhotons; i++){
-        double an = (i%180)/2.;
+	for(int i=0; i < 180; i++){
+	//for(int i=0; i < fNumPhotons; i++){
+        //double an = (G4UniformRand() * 180.)/2.;
+        double an = (i % 180)/2.;
+        if(an > 180.) std::cout << " an = " << an << std::endl;
         an = an * TMath::DegToRad();
         G4ThreeVector fPosition = G4ThreeVector(0., 1000.*sin(an), 1000.*cos(an));
         G4ThreeVector fNormal = -fPosition.unit();
@@ -129,7 +136,7 @@ void MyMiniSim::GeneratePrimaries(G4Event* event)
 void MyMiniSim::BeginOfEventAction(const G4Event* /*event*/)
 {
 
-  std::cout << "in BeginOfEventAction" << std::endl;
+//  std::cout << "in BeginOfEventAction" << std::endl;
   fTrackingAction->SetTrackingLevel(TrackingAction::eCondensed);
 
 }
@@ -139,7 +146,7 @@ void MyMiniSim::EndOfEventAction(const G4Event* g4ev)
   //this is where we see if the photon was successful
   // (i.e generated a photoelectron in the PMT bucket it entered)
   fEventCtr++;
-  std::cout << "in EndOfEventAction" << std::endl;
+//  std::cout << "in EndOfEventAction" << std::endl;
   TVector3 pmtDirection;
      pmtDirection.SetX(0.);
      pmtDirection.SetY(0.);
@@ -177,11 +184,12 @@ void MyMiniSim::EndOfEventAction(const G4Event* g4ev)
    }//if not null trajectory
 
  if(true){
- if(fEventCtr%100 == 0)
+// if(fEventCtr%10000000 == 0)
+ if(fEventCtr%1000000 == 0)
   {
   TH1D* SimAngResp = GetSimAngResp();
-  char buffer[70];
-  sprintf(buffer, "minisim_output/event_%i_%.5f.root", fEventCtr, fCurrentParam);
+  char buffer[80];
+  sprintf(buffer, "minisim_output/apr03fruns10x_seedfix_2par_%.5f_%.2f.root", fCurrentp0, fCurrentp1);
   std::string str (buffer);
   TFile savef(str.c_str(), "recreate");
   MyMiniSim::ScaleProperly(SimAngResp);

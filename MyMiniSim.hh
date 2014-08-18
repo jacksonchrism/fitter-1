@@ -21,7 +21,7 @@ namespace RAT {
 class MyMiniSim : public MiniSim
 {
 public:
-  MyMiniSim(double photonWavelength=386, double parameterIterationValue=0);
+  MyMiniSim(double photonWavelength=386, double par0=0, double par1=0);
   virtual ~MyMiniSim();
 
   // some function from which we'll call MiniSim::BeamOn(int nevents)

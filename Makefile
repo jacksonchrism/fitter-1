@@ -11,7 +11,7 @@ INCLUDES=-I. -I/home/kate -I${RATROOT}/include/RAT -I${RATROOT}/src/geo -I${RATR
 
 OBJECTS=$(SOURCES: .c*=.o)
 
-EXECUTABLE=wwfitter
+EXECUTABLE=10xapr03_fixedseed
 
 all: $(SOURCES) $(EXECUTABLE)
 

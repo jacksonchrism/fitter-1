@@ -27,6 +27,7 @@
 using namespace RAT;
 
 static int events_per_iteration = 1000000;
+//static int events_per_iteration = 10000000;
 std::string fname;
 std::string fname2;
 TFile* SNOdata;
@@ -76,7 +77,7 @@ void makeFile()
     std::ofstream outfile;
     outfile.open(fname.c_str(), std::ios::app);
     if(outfile.is_open()){
-    std::cout << "Created file for saving stuff" << std::endl;
+    std::cout << "Created file for saving stuff: " << fname.c_str()  << std::endl;
     outfile.close(); 
     }
 
@@ -84,7 +85,7 @@ void makeFile()
     std::ofstream outfile2;
     outfile2.open(fname2.c_str(), std::ios::app);
     if(outfile2.is_open()){
-    std::cout << "Created file for saving more stuff" << std::endl;
+    std::cout << "Created file for saving more stuff: " << fname2.c_str() << std::endl;
     outfile2 << 0.0 << '\t' << 1 << '\t' << 10 << '\t' << 20 << '\t' << 30 << '\t' << 40 << '\t' << 45 << '\t' << 50 << '\t' << 60 << std::endl;
     outfile2.close(); 
     }
@@ -156,7 +157,7 @@ void minuit_function(int& npar, double* gin, double& result, double* par, int fl
 
     std::cout << "in fitter about to make a minisim" << std::endl;
     // run the MiniSim and extract angular response 
-    RAT::MyMiniSim sim(386, fit_p0);
+    RAT::MyMiniSim sim(386, fit_p0, fit_p1);
     std::cout << "a minisim is made, about to beamon" << std::endl;
     sim.BeamOn(events_per_iteration);
     TH1D* SIMpmtr = sim.GetSimAngResp();
@@ -165,7 +166,7 @@ void minuit_function(int& npar, double* gin, double& result, double* par, int fl
 
     //calculate chi2
     double chi2 = 0;
-    for(int i = 0; i < 70; i++){
+    for(int i = 0; i < 44; i++){
     //for(int i = 0; i < 44; i++){ //try smaller range b/c only have real angular response data up to ~45deg
 	double ex = SNOpmtr->GetBinContent(i+1);
 	double ob = SIMpmtr->GetBinContent(i+1);
@@ -208,7 +209,8 @@ int main() {
 
     //set the seed (again). Setting it here only did not set the seed in
     // minisim, so that's why it's set in both places.
-//    CLHEP::HepRandom::setTheSeed(1234567);
+    CLHEP::HepRandom::setTheSeed(1234567);
+    std::cout << "seed set" << std::endl;
 
     // quiet down G4 output
     SetG4coutStream(G4Stream::DETAIL);
@@ -222,6 +224,10 @@ int main() {
     RAT::DB::Get()->SetS("DETECTOR", "","geo_file", "empty.geo");
     RAT::DB::Get()->SetS("DETECTOR","", "pmt_info_file", "singlepmt.ratdb");
 
+    //set starting values(?)
+    RAT::DB::Get()->SetD("AGED_CONCENTRATOR_PARAMS", "", "p0", 0.3);
+    RAT::DB::Get()->SetD("AGED_CONCENTRATOR_PARAMS", "", "p1", 70.0);
+
     //make a file name to keep params in
     //okay so the file name comes out kind of crazy/ugly.
     //I tried somethings to make it niceer but they didn't work so whatever
@@ -232,12 +238,12 @@ int main() {
     //std::string temp = asctime(timeinfo);
     //char* temp2;
     //temp.copy(temp2, 19, 0);
-    char buffer[70];
-    strftime(buffer,70, "/data/snoplus/home/kate/newfitter/fitOutput/params_%F-%H.txt",timeinfo);
+    char buffer[80];
+    strftime(buffer,80, "/data/snoplus/home/kate/newfitter/fitOutput/params_%F-%H-%M.txt",timeinfo);
     fname = buffer;
 
-    char buffer2[70];
-    strftime(buffer2,70, "/data/snoplus/home/kate/newfitter/poppick/values_%F-%H.txt", timeinfo);
+    char buffer2[80];
+    strftime(buffer2,80, "/data/snoplus/home/kate/newfitter/poppick/values_%F-%H-%M.txt", timeinfo);
     fname2 = buffer2;
     //create the files
     makeFile();
@@ -261,10 +267,19 @@ int main() {
     //SNOpmtr = (TH1D*) SNOdata->Get("p5");
     //SNOdata = new TFile("/data/snoplus/home/kate/newfitter/event_100_0.50000.root");
     //SNOpmtr = (TH1D*) SNOdata->Get("SimAngResponse");
-    SNOdata = new TFile("/data/snoplus/home/kate/newfitter/generation_plane_size_variation.root");
-    SNOpmtr = (TH1D*) SNOdata->Get("p5_300mm");
+    //SNOdata = new TFile("/data/snoplus/home/kate/newfitter/generation_plane_size_variation.root");
+    //SNOpmtr = (TH1D*) SNOdata->Get("p5_300mm");
+
+//    SNOdata = new TFile("/data/snoplus/home/kate/angularResponse/snodata/plots/pmtAngResp_may02new_fruns_386.root");
+//    SNOdata = new TFile("/data/snoplus/home/kate/angularResponse/snodata/plots/pmtAngResp_oct03_fruns_386.root");
+//    SNOdata = new TFile("/data/snoplus/home/kate/angularResponse/snodata/plots/pmtAngResp_sep01old_fruns_386.root");
+    SNOdata = new TFile("/data/snoplus/home/kate/angularResponse/snodata/plots/pmtAngResp_apr03_fruns_386.root");
+    SNOpmtr = (TH1D*) SNOdata->Get("AngularResponse");
     SNOpmtr->Sumw2();
     ScaleProperly(SNOpmtr);
+
+    std::cout << "apr03_fruns 10x stats fit" << std::endl;
+    std::cout << "p1 and p0 fit" << std::endl;
 
     double fp0;
     double fp1;
@@ -287,12 +302,12 @@ int main() {
     min.SetFCN(minuit_function);
 
     min.SetParameter(0, "p0", fp0, fp0/5, 0., 1.);
-    min.SetParameter(1, "p1", fp1, fp1/5, 0., 1.);
+    min.SetParameter(1, "p1", fp1, fp1/5, 0., 130.);
  
     //min.FixParameter(0);
     //std::cout<<"START VALUE FIXED" << std::endl;
-    min.FixParameter(1);
-    std::cout<<"p1 FIXED" << std::endl;
+//    min.FixParameter(1);
+  //  std::cout<<"p1 FIXED" << std::endl;
 
     //run the thing
     double arglist[100];

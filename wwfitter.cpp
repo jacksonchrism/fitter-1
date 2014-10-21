@@ -26,12 +26,15 @@
 
 using namespace RAT;
 
-static int events_per_iteration = 1000000;
+//static int events_per_iteration = 100;
+static int events_per_iteration = 100000;
 //static int events_per_iteration = 10000000;
 std::string fname;
 std::string fname2;
+std::string dataset_info;
 TFile* SNOdata;
 TH1D* SNOpmtr;
+TH1D* bestfit;
 
 void ScaleProperly(TH1D* result)
 {
@@ -162,14 +165,29 @@ void minuit_function(int& npar, double* gin, double& result, double* par, int fl
     sim.BeamOn(events_per_iteration);
     TH1D* SIMpmtr = sim.GetSimAngResp();
     ScaleProperly(SIMpmtr);
+    bestfit = (TH1D*)SIMpmtr->Clone("best_fit");
+
+   //save bestfit
+    char buffy[80];
+    char dataset_chars[5] = {dataset_info[0], dataset_info[1], dataset_info[2], dataset_info[3], dataset_info[4]};    
+    sprintf(buffy, "minisim_output/test_bestfit_%s.root",dataset_chars);
+    std::string str(buffy);
+    TFile bestf(str.c_str(), "recreate");
+    char buffy2[80];
+    sprintf(buffy2, "test_bestfit_%s_%.5f_%.5f.root",dataset_chars, p0, p1);
+    std::string str2(buffy2);
+    bestfit->SetName(str2.c_str());
+    bestfit->SetTitle(str2.c_str());
+    bestfit->Write();
+    bestf.Close();
 
 
     //calculate chi2
     double chi2 = 0;
-    for(int i = 0; i < 44; i++){
-    //for(int i = 0; i < 44; i++){ //try smaller range b/c only have real angular response data up to ~45deg
+    for(int i = 0; i < 60; i++){
 	double ex = SNOpmtr->GetBinContent(i+1);
 	double ob = SIMpmtr->GetBinContent(i+1);
+        if(ex == 0.0) break;
 	double err_ob = SIMpmtr->GetBinError(i+1);
 	double err_ex = SNOpmtr->GetBinError(i+1);
 	double err2 = err_ob*err_ob + err_ex*err_ex;
@@ -203,7 +221,18 @@ void minuit_function(int& npar, double* gin, double& result, double* par, int fl
 
 
 
-int main() {
+int main(int argc, char* argv[])
+{
+   if ( argc != 2 ) // argc should be 2 for correct execution
+   {   // We print argv[0]: it is the program name
+      std::cout<<"usage: "<< argv[0]  << " may02, apr03, oct03, sep01 \n";
+      return -1; // exit
+   }
+
+   std::string dataset = argv[1];
+   dataset_info = dataset;
+
+
     // start RAT logging otherwise horrible error
     RAT::Log::Init("wwfitter.log");
 
@@ -224,6 +253,7 @@ int main() {
     RAT::DB::Get()->SetS("DETECTOR", "","geo_file", "empty.geo");
     RAT::DB::Get()->SetS("DETECTOR","", "pmt_info_file", "singlepmt.ratdb");
 
+    RAT::DB::Get()->SetI("PMTCALIB", "", "use_qhs_hhp", 0);
     //set starting values(?)
     RAT::DB::Get()->SetD("AGED_CONCENTRATOR_PARAMS", "", "p0", 0.3);
     RAT::DB::Get()->SetD("AGED_CONCENTRATOR_PARAMS", "", "p1", 70.0);
@@ -270,16 +300,36 @@ int main() {
     //SNOdata = new TFile("/data/snoplus/home/kate/newfitter/generation_plane_size_variation.root");
     //SNOpmtr = (TH1D*) SNOdata->Get("p5_300mm");
 
-//    SNOdata = new TFile("/data/snoplus/home/kate/angularResponse/snodata/plots/pmtAngResp_may02new_fruns_386.root");
-//    SNOdata = new TFile("/data/snoplus/home/kate/angularResponse/snodata/plots/pmtAngResp_oct03_fruns_386.root");
-//    SNOdata = new TFile("/data/snoplus/home/kate/angularResponse/snodata/plots/pmtAngResp_sep01old_fruns_386.root");
-    SNOdata = new TFile("/data/snoplus/home/kate/angularResponse/snodata/plots/pmtAngResp_apr03_fruns_386.root");
-    SNOpmtr = (TH1D*) SNOdata->Get("AngularResponse");
-    SNOpmtr->Sumw2();
-    ScaleProperly(SNOpmtr);
+     if(dataset.compare("may02") == 0)
+     {
+     SNOdata = new TFile("/data/snoplus/home/kate/angularResponse/snodata/plots/pmtAngResp_may02new_fruns_386.root");
+     }
+     if(dataset.compare("oct03") == 0)
+     {
+     SNOdata = new TFile("/data/snoplus/home/kate/angularResponse/snodata/plots/pmtAngResp_oct03_fruns_386.root");
+     }
+     if(dataset.compare("sep01") == 0)
+     {
+     SNOdata = new TFile("/data/snoplus/home/kate/angularResponse/snodata/plots/pmtAngResp_sep01old_fruns_386.root");
+     }
+     if(dataset.compare("apr03") == 0)
+     {
+     SNOdata = new TFile("/data/snoplus/home/kate/angularResponse/snodata/plots/pmtAngResp_apr03_fruns_386.root");
+     }
 
-    std::cout << "apr03_fruns 10x stats fit" << std::endl;
-    std::cout << "p1 and p0 fit" << std::endl;
+    SNOpmtr = (TH1D*) SNOdata->Get("AngularResponse");
+
+    //test const aging
+    //SNOdata = new TFile("../checkAR/planegen_const.root");
+    //SNOpmtr = (TH1D*) SNOdata->Get("angres_386nm_agedconst_0p5_300mmgen_100000000ev");
+
+//    std::cout << "test const aging" << std::endl;
+//    SNOdata = new TFile("../checkAR/planegen_const_3.root");
+//    SNOpmtr = (TH1D*) SNOdata->Get("hResponse");
+//    SNOpmtr->Sumw2();
+//    ScaleProperly(SNOpmtr);
+
+    std::cout << "dataset " << dataset << " with " << events_per_iteration << " events" << std::endl;
 
     double fp0;
     double fp1;
@@ -306,8 +356,8 @@ int main() {
  
     //min.FixParameter(0);
     //std::cout<<"START VALUE FIXED" << std::endl;
-//    min.FixParameter(1);
-  //  std::cout<<"p1 FIXED" << std::endl;
+    min.FixParameter(1);
+    std::cout<<"p1 FIXED" << std::endl;
 
     //run the thing
     double arglist[100];
@@ -324,6 +374,16 @@ int main() {
     std::cout << "Best fit p1: " << fit_p1 << std::endl;
 
     SNOdata->Close();
+
+   //save bestfit
+//    char buffy[80];
+//    sprintf(buffy, "minisim_output/test_bestfit_%.5f_%.5f.root", fit_p0, fit_p1);
+//    std::string str(buffy);
+//    TFile bestf(str.c_str(), "recreate");
+//    bestfit = (TH1D*) bestfit;
+//    bestfit->Write();
+//    bestf.Close();
+
 
 
 }

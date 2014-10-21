@@ -18,6 +18,11 @@
 #include <RAT/DS/MCPhoton.hh>
 #include <RAT/TrackingAction.hh>
 
+
+#include <CLHEP/Units/PhysicalConstants.h>
+#include <CLHEP/Units/SystemOfUnits.h>
+using namespace CLHEP;
+
 //class G4VPhysicalVolume;
 //class G4VSolid;
 
@@ -183,13 +188,13 @@ void MyMiniSim::EndOfEventAction(const G4Event* g4ev)
     }
    }//if not null trajectory
 
- if(true){
+ if(false){
 // if(fEventCtr%10000000 == 0)
  if(fEventCtr%1000000 == 0)
   {
   TH1D* SimAngResp = GetSimAngResp();
   char buffer[80];
-  sprintf(buffer, "minisim_output/apr03fruns10x_seedfix_2par_%.5f_%.2f.root", fCurrentp0, fCurrentp1);
+  sprintf(buffer, "minisim_output/running_to_test_AR_no_aging_%.5f_%.2f.root", fCurrentp0, fCurrentp1);
   std::string str (buffer);
   TFile savef(str.c_str(), "recreate");
   MyMiniSim::ScaleProperly(SimAngResp);

@@ -27,7 +27,8 @@
 using namespace RAT;
 
 //static int events_per_iteration = 100;
-static int events_per_iteration = 100000;
+//static int events_per_iteration = 100000;
+static int events_per_iteration = 1000000;
 //static int events_per_iteration = 10000000;
 std::string fname;
 std::string fname2;
@@ -179,6 +180,7 @@ void minuit_function(int& npar, double* gin, double& result, double* par, int fl
     bestfit->SetName(str2.c_str());
     bestfit->SetTitle(str2.c_str());
     bestfit->Write();
+    SNOpmtr->Write();
     bestf.Close();
 
 

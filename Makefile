@@ -11,7 +11,7 @@ INCLUDES=-I. -I/home/kate -I${RATROOT}/include/RAT -I${RATROOT}/src/geo -I${RATR
 
 OBJECTS=$(SOURCES: .c*=.o)
 
-EXECUTABLE=constaging_test
+EXECUTABLE=linearaging_test
 
 all: $(SOURCES) $(EXECUTABLE)
 

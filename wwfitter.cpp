@@ -353,13 +353,13 @@ int main(int argc, char* argv[])
     TFitter min(2);
     min.SetFCN(minuit_function);
 
-    min.SetParameter(0, "p0", fp0, fp0/5, 0., 1.);
-    min.SetParameter(1, "p1", fp1, fp1/5, 0., 130.);
+    min.SetParameter(0, "p0", fp0, 0.1, 0., 1.);
+    min.SetParameter(1, "p1", fp1, 10., 0., 130.);
  
     //min.FixParameter(0);
     //std::cout<<"START VALUE FIXED" << std::endl;
-    min.FixParameter(1);
-    std::cout<<"p1 FIXED" << std::endl;
+//    min.FixParameter(1);
+//    std::cout<<"p1 FIXED" << std::endl;
 
     //run the thing
     double arglist[100];

@@ -26,9 +26,9 @@
 
 using namespace RAT;
 
-//static int events_per_iteration = 100;
+static int events_per_iteration = 10;
 //static int events_per_iteration = 100000;
-static int events_per_iteration = 1000000;
+//static int events_per_iteration = 1000000;
 //static int events_per_iteration = 10000000;
 std::string fname;
 std::string fname2;
@@ -53,27 +53,7 @@ void ScaleProperly(TH1D* result)
         }
 }
 
-void writeParams(double p0, double p1)
-{
-    std::ofstream dbAgingFile;
-    dbAgingFile.open("/data/snoplus/home/kate/newfitter/AGED_CONCENTRATOR_PARAMS.ratdb");
-    //dbAgingFile.open("./AGED_CONCENTRATOR_PARAMS.ratdb");
-    if(dbAgingFile.is_open()){
-    dbAgingFile << "{\n";
-    dbAgingFile << "name: \"AGED_CONCENTRATOR_PARAMS\",\n";
-    dbAgingFile << "valid_begin: [0,0],\n";
-    dbAgingFile << "valid_end: [0,0],\n";
-    char buffer[35];
-    std::sprintf(buffer,"p0: %fd,\n", p0);
-    dbAgingFile << buffer;
-    std::sprintf(buffer,"p1: %fd,\n", p1);
-    dbAgingFile << buffer;
-    dbAgingFile << "}";
-    dbAgingFile.close();
-    }
 
-
-}
 
 void makeFile()
 { 
@@ -271,11 +251,11 @@ int main(int argc, char* argv[])
     //char* temp2;
     //temp.copy(temp2, 19, 0);
     char buffer[80];
-    strftime(buffer,80, "/data/snoplus/home/kate/newfitter/fitOutput/params_%F-%H-%M.txt",timeinfo);
+    strftime(buffer,80, "/data/snoplus/home/jackson/SNO+_angular/fitter_linear/fitOutput/params_%F-%H-%M.txt",timeinfo);
     fname = buffer;
 
     char buffer2[80];
-    strftime(buffer2,80, "/data/snoplus/home/kate/newfitter/poppick/values_%F-%H-%M.txt", timeinfo);
+    strftime(buffer2,80, "/data/snoplus/home/jackson/SNO+_angular/fitter_linear/poppick/values_%F-%H-%M.txt", timeinfo);
     fname2 = buffer2;
     //create the files
     makeFile();
@@ -304,19 +284,19 @@ int main(int argc, char* argv[])
 
      if(dataset.compare("may02") == 0)
      {
-     SNOdata = new TFile("/data/snoplus/home/kate/angularResponse/snodata/plots/pmtAngResp_may02new_fruns_386.root");
+     SNOdata = new TFile("/data/snoplus/home/jackson/SNO+_angular/snodata/plots/pmtAngResp_may02new_fruns_386.root");
      }
      if(dataset.compare("oct03") == 0)
      {
-     SNOdata = new TFile("/data/snoplus/home/kate/angularResponse/snodata/plots/pmtAngResp_oct03_fruns_386.root");
+     SNOdata = new TFile("/data/snoplus/home/jackson/SNO+_angular/snodata/plots/pmtAngResp_oct03_fruns_386.root");
      }
      if(dataset.compare("sep01") == 0)
      {
-     SNOdata = new TFile("/data/snoplus/home/kate/angularResponse/snodata/plots/pmtAngResp_sep01old_fruns_386.root");
+     SNOdata = new TFile("/data/snoplus/home/jackson/SNO+_angular/snodata/plots/pmtAngResp_sep01old_fruns_386.root");
      }
      if(dataset.compare("apr03") == 0)
      {
-     SNOdata = new TFile("/data/snoplus/home/kate/angularResponse/snodata/plots/pmtAngResp_apr03_fruns_386.root");
+     SNOdata = new TFile("/data/snoplus/home/jackson/SNO+_angular/snodata/plots/pmtAngResp_apr03_fruns_386.root");
      }
 
     SNOpmtr = (TH1D*) SNOdata->Get("AngularResponse");
